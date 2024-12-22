@@ -31,6 +31,33 @@ const ChatPage = () => {
   const showToast = useShowToast();
   const {socket , onlineUsers} = useSocket()
 
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleMessagesSeen = ({ conversationId }) => {
+      setConversation((prev) =>
+        prev.map((conversation) =>
+          conversation._id === conversationId
+            ? {
+                ...conversation,
+                lastMessages: {
+                  ...conversation.lastMessages,
+                  seen: true,
+                },
+              }
+            : conversation
+        )
+      );
+    };
+
+    socket.on("messagesSeen", handleMessagesSeen);
+
+    return () => {
+      socket.off("messagesSeen", handleMessagesSeen);
+    };
+  }, [setConversation, socket]);
+
   useEffect(() => {
     const fetchConversations = async () => {
       try {
@@ -160,6 +187,7 @@ const ChatPage = () => {
                 key={c._id}
                 conversation={c}
                 isOnline={onlineUsers.includes(c.participants[0]._id)}
+
                 setSelectedConversation={setSelectedConversation}
               />
             ))

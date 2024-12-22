@@ -3,6 +3,7 @@ import express from 'express'
 import http from 'http'
 import dotenv from 'dotenv'
 import Message from '../models/messageMode.js'
+import Conversation from '../models/conversationModel.js'
 
 dotenv.config()
 
@@ -32,6 +33,8 @@ io.on('connection', (socket) => {
     socket.on("markMessageAsSeen", async({conversationId ,userId})=>{
         try {
             await Message.updateMany({conversationId:conversationId , seen:false},{$set:{seen:true}})
+
+            await Conversation.updateOne({_id:conversationId},{$set:{"lastMessages.seen":true}})
             io.to(userSocketMap[userId]).emit("messagesSeen",{conversationId})
 
         } catch (error) {

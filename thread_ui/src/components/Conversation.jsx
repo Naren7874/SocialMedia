@@ -1,8 +1,8 @@
 /* eslint-disable react/prop-types */
-// Conversation.jsx
 import {
   Avatar,
   AvatarBadge,
+  Box,
   Flex,
   Image,
   Stack,
@@ -15,34 +15,39 @@ import { useRecoilState, useRecoilValue } from "recoil";
 import userAtom from "../atoms/userAtom";
 import selectedConversationAtom from "../atoms/selectedConversationAtom";
 
-const Conversation = ({ conversation, setSelectedConversation ,isOnline }) => {
-  const lastMessage = conversation.lastMessages?.text;
+const Conversation = ({ conversation, setSelectedConversation, isOnline }) => {
+  const { lastMessages = {}, participants, _id: conversationId, mock } = conversation || {};
+  const { text: lastMessageText = "", seen, sender } = lastMessages;
   const [selectedConversation] = useRecoilState(selectedConversationAtom);
   const currentUser = useRecoilValue(userAtom);
 
-  const otherParticipant = conversation.participants.find(
+  const otherParticipant = participants?.find(
     (participant) => participant._id !== currentUser._id
   );
 
-  const isSelected = selectedConversation?._id === conversation._id;
+  const isSelected = selectedConversation?._id === conversationId;
   const selectedBg = useColorModeValue("gray.200", "gray.700"); // Light and dark mode bg for selected
   const hoverBg = useColorModeValue("gray.100", "gray.600"); // Light and dark mode bg for hover
   const textColor = useColorModeValue("black", "white"); // Text color for light and dark modes
+
+  const handleSelectConversation = () => {
+    if (otherParticipant) {
+      setSelectedConversation({
+        _id: conversationId,
+        userId: otherParticipant._id,
+        username: otherParticipant.username,
+        userProfilePic: otherParticipant.profilePic || "./NoProfile",
+        mock,
+      });
+    }
+  };
 
   return (
     <Flex
       gap={4}
       alignItems="center"
-      p="1"
-      onClick={() =>
-        setSelectedConversation({
-          _id: conversation._id,
-          userId: otherParticipant._id,
-          username: otherParticipant.username,
-          userProfilePic: otherParticipant.profilePic || "./NoProfile",
-          mock: conversation.mock,
-        })
-      }
+      p={2}
+      onClick={handleSelectConversation}
       _hover={{
         cursor: "pointer",
         bg: hoverBg,
@@ -54,25 +59,25 @@ const Conversation = ({ conversation, setSelectedConversation ,isOnline }) => {
       <WrapItem>
         <Avatar
           size={{ base: "xs", sm: "sm", md: "md" }}
-          src={otherParticipant.profilePic || "./NoProfile"}
+          src={otherParticipant?.profilePic || "./NoProfile"}
         >
-          {
-            isOnline ? <AvatarBadge boxSize='1em' bg="green.500"/>:""
-          }
+          {isOnline && <AvatarBadge boxSize="1em" bg="green.500" />}
         </Avatar>
       </WrapItem>
 
       <Stack direction="column" fontSize="sm">
         <Text fontWeight="700" display="flex" alignItems="center">
-          {otherParticipant.username}
-          <Image src="/verified.png" w={4} h={4} ml={1} />
+          {otherParticipant?.username}
+          <Image src="/verified.png" w={4} h={4} ml={1} alt="Verified Badge" />
         </Text>
         <Text fontSize="xs" display="flex" alignItems="center" gap={1}>
-          {lastMessage?.length > 18
-            ? `${lastMessage.substring(0, 18)}...`
-            : lastMessage}
-          {currentUser._id === conversation?.lastMessages?.sender && (
-            <BsCheck2All size={16} />
+          {lastMessageText?.length > 18
+            ? `${lastMessageText.substring(0, 18)}...`
+            : lastMessageText}
+          {currentUser._id === sender && (
+            <Box color={seen ? "blue.400" : ""}>
+              <BsCheck2All size={16} />
+            </Box>
           )}
         </Text>
       </Stack>
