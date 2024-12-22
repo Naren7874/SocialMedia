@@ -31,6 +31,36 @@ const MessageContainer = () => {
   const bottomRef = useRef(); // Ref to track the last message
   const setConversations = useSetRecoilState(conversationAtom);
 
+
+  useEffect(()=>{
+
+    const lastMessageIsFromOtherUser =  messages.length && messages[messages.length - 1].sender !== currentUser._id
+
+    if(lastMessageIsFromOtherUser){
+      socket.emit("markMessageAsSeen",{
+        conversationId: selectedConversation._id,
+        userId: selectedConversation.userId,
+      })
+    }
+
+    socket.on('messagesSeen' , ({conversationId})=>{
+      if(selectedConversation._id === conversationId){
+        setMessages(prev =>{
+          const updatedMessages = prev.map(message =>{
+            if(!message.seen){
+              return{
+                ...message,
+                seen: true,
+              }
+            }
+            return message
+          })
+          return updatedMessages
+        })
+      }
+    })
+  },[currentUser._id, messages, selectedConversation, socket])
+
   // Scroll to the last message
   useEffect(() => {
     if (bottomRef.current) {

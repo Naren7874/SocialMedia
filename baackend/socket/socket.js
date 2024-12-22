@@ -2,6 +2,7 @@ import {Server} from 'socket.io'
 import express from 'express'
 import http from 'http'
 import dotenv from 'dotenv'
+import Message from '../models/messageMode.js'
 
 dotenv.config()
 
@@ -27,12 +28,24 @@ io.on('connection', (socket) => {
         console.log(`User ${userId} connected`)
     }
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
+
+    socket.on("markMessageAsSeen", async({conversationId ,userId})=>{
+        try {
+            await Message.updateMany({conversationId:conversationId , seen:false},{$set:{seen:true}})
+            io.to(userSocketMap[userId]).emit("messagesSeen",{conversationId})
+
+        } catch (error) {
+            console.error(error.message);
+        }
+    })
     
     socket.on('disconnect', () => {
         console.log('user disconnected')
         delete userSocketMap[userId];
         io.emit("getOnlineUsers", Object.keys(userSocketMap));
     })
+
+
 
     // socket.on('joinRoom', (room) => {
     //     socket.join(room)
