@@ -1,0 +1,9 @@
+in recoil library of react is use for state management toool like redux  
+every state is known as atoms and
+
+console-ninja node --watch app.js(
+
+socket.on() => Listens for events.Both client and server
+io.emit() => sends event to every user 
+io.to(socketId).emit() => sends event to only one user
+
