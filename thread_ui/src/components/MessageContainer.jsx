@@ -13,7 +13,7 @@ import Message from "./Message";
 import MessageInput from "./MessageInput.jsx";
 import { useRecoilState, useRecoilValue } from "recoil";
 import selectedConversationAtom from "../atoms/selectedConversationAtom.js";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useShowToast from "../hooks/useShowToast.js";
 import apiReq from "./lib/apiReq.js";
 import userAtom from "../atoms/userAtom.js";
@@ -25,29 +25,34 @@ const MessageContainer = () => {
   const [loadingMessage, setLoadingMessages] = useState(true);
   const currentUser = useRecoilValue(userAtom);
   const showToast = useShowToast();
-  const [messages  ,setMessages] = useState([]);
-  const {socket} = useSocket();
-  // Fetch messages from selected conversation
-  // console.log("your selected user id is \n"+ selectedConversation.userId);
+  const [messages, setMessages] = useState([]);
+  const { socket } = useSocket();
+  const bottomRef = useRef(); // Ref to track the last message
 
+  // Scroll to the last message
+  useEffect(() => {
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
-  useEffect(() =>{
-    socket.on("newMessage",(message)=>{
-      setMessages((prev)=>[...prev , message])
-    })
+  // Listen for new messages
+  useEffect(() => {
+    socket.on("newMessage", (message) => {
+      setMessages((prev) => [...prev, message]);
+    });
 
     return () => socket.off("newMessage");
-
-  },[socket])
+  }, [socket]);
 
   // Fetch messages when selected conversation changes
   useEffect(() => {
     const getMessages = async () => {
       setLoadingMessages(true);
       setMessages([]);
-      
+
       try {
-        if(selectedConversation.mock) return; 
+        if (selectedConversation.mock) return;
         const res = await apiReq.get(
           `/messages/${selectedConversation.userId}`
         );
@@ -55,23 +60,22 @@ const MessageContainer = () => {
           showToast("Error", res.data.error, "error");
           return;
         }
-        // console.log(res.data)
         setMessages(res.data);
       } catch (error) {
         console.log("Error: " + error.message);
         showToast("Error", "Failed to fetch messages", "error");
-   
       } finally {
         setLoadingMessages(false);
-
       }
     };
     getMessages();
-    // You can fetch all messages from selected conversation here
+  }, [
+    showToast,
+    selectedConversation.userId,
+    selectedConversation._id,
+    selectedConversation.mock,
+  ]);
 
-  }, [showToast, selectedConversation.userId, selectedConversation._id, selectedConversation.mock]);
-
-  
   return (
     <Flex
       flex="70"
@@ -82,18 +86,12 @@ const MessageContainer = () => {
     >
       {/* Message header */}
       <Flex w={"full"} h={12} alignItems={"center"} gap={2}>
-        <Avatar
-          src={
-            selectedConversation.userProfilePic
-          }
-          size={"sm"}
-        />
+        <Avatar src={selectedConversation.userProfilePic} size={"sm"} />
         <Text display={"flex"} alignItems={"center"}>
           {selectedConversation.username}
           <Image src="/verified.png" w={4} h={4} ml={1} />
         </Text>
       </Flex>
-
       <Divider />
 
       <Flex
@@ -124,15 +122,18 @@ const MessageContainer = () => {
             </Flex>
           ))}
 
-        {!loadingMessage && (
-          <>
-            {messages.map((message, index) => (
-              <Message key={index} message={message} ownMessage={currentUser._id === message.sender} />
-            ))}
-          </>
-        )}
+        {!loadingMessage &&
+          messages.map((message, index) => (
+            <Message
+              key={index}
+              message={message}
+              ownMessage={currentUser._id === message.sender}
+            />
+          ))}
+        {/* Dummy element to scroll into view */}
+        <div ref={bottomRef} />
       </Flex>
-      < MessageInput   setMessages={setMessages}/>
+      <MessageInput setMessages={setMessages} />
     </Flex>
   );
 };
