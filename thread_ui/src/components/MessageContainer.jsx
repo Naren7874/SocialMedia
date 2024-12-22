@@ -11,13 +11,14 @@ import {
 } from "@chakra-ui/react";
 import Message from "./Message";
 import MessageInput from "./MessageInput.jsx";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import selectedConversationAtom from "../atoms/selectedConversationAtom.js";
 import { useEffect, useRef, useState } from "react";
 import useShowToast from "../hooks/useShowToast.js";
 import apiReq from "./lib/apiReq.js";
 import userAtom from "../atoms/userAtom.js";
 import { useSocket } from "../context/SocketContext.jsx";
+import conversationAtom from "../atoms/messagesAtom.js";
 const MessageContainer = () => {
   const [selectedConversation, setSelectedConversation] = useRecoilState(
     selectedConversationAtom
@@ -28,6 +29,7 @@ const MessageContainer = () => {
   const [messages, setMessages] = useState([]);
   const { socket } = useSocket();
   const bottomRef = useRef(); // Ref to track the last message
+  const setConversations = useSetRecoilState(conversationAtom);
 
   // Scroll to the last message
   useEffect(() => {
@@ -39,11 +41,30 @@ const MessageContainer = () => {
   // Listen for new messages
   useEffect(() => {
     socket.on("newMessage", (message) => {
+
+      if(selectedConversation._id === message.conversationId){
       setMessages((prev) => [...prev, message]);
+      }
+
+      setConversations((prev) => {
+				const updatedConversations = prev.map((conversation) => {
+					if (conversation._id === message.conversationId) {
+						return {
+              ...conversation,
+              lastMessages: {
+                text: message.text,
+                sender: message.sender,
+              },
+            };
+					}
+					return conversation;
+				});
+				return updatedConversations;
+			});
     });
 
     return () => socket.off("newMessage");
-  }, [socket]);
+  }, [selectedConversation, setConversations, socket ]);
 
   // Fetch messages when selected conversation changes
   useEffect(() => {
