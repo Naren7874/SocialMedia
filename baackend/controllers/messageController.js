@@ -38,10 +38,11 @@ const sendMessage = async(req, res)=>{
         ])        
         
         const recipientSocketId = getRecipientSocketId(reciverId);
-        
+        console.log(recipientSocketId)
         if(recipientSocketId){
-            io.to(recipientSocketId).emit('message', newMessage);
+            io.to(recipientSocketId).emit('newMessage', newMessage);
         }
+        
         res.status(201).json(newMessage);
         
     } catch (error) {

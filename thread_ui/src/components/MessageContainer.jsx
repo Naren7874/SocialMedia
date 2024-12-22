@@ -32,11 +32,11 @@ const MessageContainer = () => {
 
 
   useEffect(() =>{
-    socket?.on("newMessage",(message)=>{
+    socket.on("newMessage",(message)=>{
       setMessages((prev)=>[...prev , message])
     })
 
-    return () => socket && socket.off("newMessage");
+    return () => socket.off("newMessage");
 
   },[socket])
 
@@ -69,7 +69,7 @@ const MessageContainer = () => {
     getMessages();
     // You can fetch all messages from selected conversation here
 
-  }, [showToast, selectedConversation.userId , selectedConversation._id]);
+  }, [showToast, selectedConversation.userId, selectedConversation._id, selectedConversation.mock]);
 
   
   return (
