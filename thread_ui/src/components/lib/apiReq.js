@@ -2,7 +2,7 @@ import axios from "axios";
 
 
 const apiReq = axios.create({
-  baseURL: "http://localhost:8800/api",
+  baseURL: "https://linkup-e9b3bmgwfygzb3dc.centralindia-01.azurewebsites.net/api",
   withCredentials: true, 
 });
 
