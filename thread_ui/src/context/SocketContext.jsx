@@ -14,7 +14,7 @@ export const SocketContextProvider = ({ children }) => {
   const user = useRecoilValue(userAtom);
   const [onlineUsers ,setOnlineUsers] = useState("")
   useEffect(() => {
-    const socket = io("http://localhost:8800", {
+    const socket = io("https://linkup-e9b3bmgwfygzb3dc.centralindia-01.azurewebsites.net", {
       query: {
         userId: user?._id,
       },
